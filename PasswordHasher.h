@@ -8,7 +8,13 @@
 #include <iomanip>
 
 class PasswordHasher {
-private:
+public:
+    // Cấu trúc lưu trữ mật khẩu đã băm
+    struct HashResult {
+        std::string hashedPassword;
+        std::string salt;
+    };
+    
     // Tạo salt (giá trị ngẫu nhiên) để tăng cường bảo mật
     static std::string generateSalt(size_t length = 16) {
         const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
@@ -23,13 +29,6 @@ private:
         }
         return salt;
     }
-
-public:
-    // Cấu trúc lưu trữ mật khẩu đã băm
-    struct HashResult {
-        std::string hashedPassword;
-        std::string salt;
-    };
     
     // Hàm băm mật khẩu
     static HashResult hashPassword(const std::string& password) {
@@ -39,7 +38,7 @@ public:
         // Kết hợp mật khẩu với salt
         std::string saltedPassword = password + result.salt;
         
-        // Tính toán SHA-256 (phiên bản đơn giản)
+        // Tính toán băm
         result.hashedPassword = sha256(saltedPassword);
         
         return result;
@@ -56,7 +55,7 @@ public:
         return hashedAttempt == hashResult.hashedPassword;
     }
     
-    // Triển khai SHA-256 đơn giản (trong thực tế nên dùng thư viện như OpenSSL)
+    // Triển khai băm đơn giản (trong thực tế nên dùng thư viện chuyên nghiệp)
     static std::string sha256(const std::string& str) {
         std::hash<std::string> hasher;
         size_t hash = hasher(str);
@@ -64,7 +63,7 @@ public:
         std::stringstream ss;
         ss << std::hex << std::setw(16) << std::setfill('0') << hash;
         
-        // Làm phức tạp hơn một chút bằng cách lặp lại quá trình băm
+        // Lặp lại quá trình băm để tăng độ phức tạp
         for (int i = 0; i < 1000; ++i) {
             std::string temp = ss.str();
             hash = hasher(temp);
@@ -88,6 +87,10 @@ public:
         if (colonPos != std::string::npos) {
             result.hashedPassword = str.substr(0, colonPos);
             result.salt = str.substr(colonPos + 1);
+        } else {
+            // Xử lý trường hợp lỗi định dạng
+            result.hashedPassword = str;
+            result.salt = "";
         }
         
         return result;

@@ -177,18 +177,330 @@ void logout(AccountManager& manager) {
     }
 }
 
-void showMenu() {
-    std::cout << "\nMENU:" << std::endl;
-    std::cout << "1. Dang ky tai khoan moi" << std::endl;
-    std::cout << "2. Dang nhap" << std::endl;
-    std::cout << "3. Doi mat khau" << std::endl;
-    std::cout << "4. Dang xuat" << std::endl;
-    std::cout << "5. Hien thi tat ca tai khoan" << std::endl;
-    std::cout << "6. Sao luu du lieu" << std::endl;
-    std::cout << "7. Phuc hoi du lieu" << std::endl;
+// Menu chỉnh sửa thông tin cá nhân chi tiết
+void editUserInfoMenu(AccountManager& manager) {
+    if (!manager.isLoggedIn()) {
+        std::cout << "Ban chua dang nhap!" << std::endl;
+        return;
+    }
+    
+    std::string username = manager.getCurrentUser();
+    int choice;
+    
+    do {
+        std::cout << "\n=== CHINH SUA THONG TIN CA NHAN ===" << std::endl;
+        std::cout << "1. Chinh sua ho ten" << std::endl;
+        std::cout << "2. Chinh sua ngay sinh" << std::endl;
+        std::cout << "3. Chinh sua dia chi" << std::endl;
+        std::cout << "4. Chinh sua so dien thoai" << std::endl;
+        std::cout << "5. Chinh sua email" << std::endl;
+        std::cout << "0. Quay lai" << std::endl;
+        
+        std::cout << "Lua chon cua ban: ";
+        std::cin >> choice;
+        clearInputBuffer();
+        
+        std::string newValue;
+        
+        switch (choice) {
+            case 1: // Sửa họ tên
+                if (manager.hasPermission(PermissionType::EDIT_OWN_FULLNAME)) {
+                    std::cout << "Nhap ho ten moi: ";
+                    std::getline(std::cin, newValue);
+                    manager.updateUserFullName(username, newValue);
+                } else {
+                    std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+                }
+                break;
+                
+            case 2: // Sửa ngày sinh
+                if (manager.hasPermission(PermissionType::EDIT_OWN_DOB)) {
+                    std::cout << "Nhap ngay sinh moi (DD/MM/YYYY): ";
+                    std::getline(std::cin, newValue);
+                    manager.updateUserDateOfBirth(username, newValue);
+                } else {
+                    std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+                }
+                break;
+                
+            case 3: // Sửa địa chỉ
+                if (manager.hasPermission(PermissionType::EDIT_OWN_ADDRESS)) {
+                    std::cout << "Nhap dia chi moi: ";
+                    std::getline(std::cin, newValue);
+                    manager.updateUserAddress(username, newValue);
+                } else {
+                    std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+                }
+                break;
+                
+            case 4: // Sửa số điện thoại
+                if (manager.hasPermission(PermissionType::EDIT_OWN_PHONE)) {
+                    std::cout << "Nhap so dien thoai moi: ";
+                    std::getline(std::cin, newValue);
+                    manager.updateUserPhone(username, newValue);
+                } else {
+                    std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+                }
+                break;
+                
+            case 5: // Sửa email
+                if (manager.hasPermission(PermissionType::EDIT_OWN_EMAIL)) {
+                    std::cout << "Nhap email moi: ";
+                    std::getline(std::cin, newValue);
+                    manager.updateUserEmail(username, newValue);
+                } else {
+                    std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+                }
+                break;
+                
+            case 0: // Quay lại
+                break;
+                
+            default:
+                std::cout << "Lua chon khong hop le!" << std::endl;
+        }
+    } while (choice != 0);
+}
+
+// Menu làm hộ (dành cho người quản lý)
+void editOtherAccountMenu(AccountManager& manager) {
+    if (!manager.isLoggedIn() || !manager.hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+        std::cout << "Ban khong co quyen chinh sua thong tin tai khoan khac!" << std::endl;
+        return;
+    }
+    
+    std::string username;
+    std::cout << "Nhap ten dang nhap cua tai khoan can chinh sua: ";
+    std::getline(std::cin, username);
+    
+    if (!manager.usernameExists(username)) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return;
+    }
+    
+    // Không thể chỉnh sửa tên đăng nhập
+    std::cout << "Chu y: Khong the thay doi ten dang nhap '" << username << "'" << std::endl;
+    
+    int choice;
+    do {
+        std::cout << "\n=== CHINH SUA THONG TIN TAI KHOAN " << username << " ===" << std::endl;
+        std::cout << "1. Chinh sua ho ten" << std::endl;
+        std::cout << "2. Chinh sua ngay sinh" << std::endl;
+        std::cout << "3. Chinh sua dia chi" << std::endl;
+        std::cout << "4. Chinh sua so dien thoai" << std::endl;
+        std::cout << "5. Chinh sua email" << std::endl;
+        std::cout << "6. Dat lai mat khau" << std::endl;
+        std::cout << "0. Quay lai" << std::endl;
+        
+        std::cout << "Lua chon cua ban: ";
+        std::cin >> choice;
+        clearInputBuffer();
+        
+        std::string newValue;
+        
+        switch (choice) {
+            case 1: // Sửa họ tên
+                std::cout << "Nhap ho ten moi: ";
+                std::getline(std::cin, newValue);
+                manager.updateUserFullName(username, newValue);
+                break;
+                
+            case 2: // Sửa ngày sinh
+                std::cout << "Nhap ngay sinh moi (DD/MM/YYYY): ";
+                std::getline(std::cin, newValue);
+                manager.updateUserDateOfBirth(username, newValue);
+                break;
+                
+            case 3: // Sửa địa chỉ
+                std::cout << "Nhap dia chi moi: ";
+                std::getline(std::cin, newValue);
+                manager.updateUserAddress(username, newValue);
+                break;
+                
+            case 4: // Sửa số điện thoại
+                std::cout << "Nhap so dien thoai moi: ";
+                std::getline(std::cin, newValue);
+                manager.updateUserPhone(username, newValue);
+                break;
+                
+            case 5: // Sửa email
+                std::cout << "Nhap email moi: ";
+                std::getline(std::cin, newValue);
+                manager.updateUserEmail(username, newValue);
+                break;
+                
+            case 6: // Đặt lại mật khẩu
+                std::cout << "Nhap mat khau moi: ";
+                std::getline(std::cin, newValue);
+                manager.forceChangePassword(username, newValue);
+                break;
+                
+            case 0: // Quay lại
+                break;
+                
+            default:
+                std::cout << "Lua chon khong hop le!" << std::endl;
+        }
+    } while (choice != 0);
+}
+
+// Chức năng người dùng thông thường
+void userFeatures(AccountManager& manager) {
+    if (!manager.isLoggedIn()) {
+        std::cout << "Ban chua dang nhap!" << std::endl;
+        return;
+    }
+    
+    int choice;
+    do {
+        std::cout << "\n=== CHUC NANG NGUOI DUNG ===" << std::endl;
+        std::cout << "1. Xem thong tin tai khoan" << std::endl;
+        std::cout << "2. Chinh sua thong tin ca nhan" << std::endl;
+        std::cout << "3. Doi mat khau" << std::endl;
+        std::cout << "0. Quay lai" << std::endl;
+        
+        std::cout << "Lua chon cua ban: ";
+        std::cin >> choice;
+        clearInputBuffer();
+        
+        switch (choice) {
+            case 1: // Xem thông tin tài khoản
+                if (manager.hasPermission(PermissionType::VIEW_OWN_ACCOUNT)) {
+                    manager.displayOwnAccount();
+                } else {
+                    std::cout << "Ban khong co quyen xem thong tin tai khoan!" << std::endl;
+                }
+                break;
+                
+            case 2: // Chỉnh sửa thông tin cá nhân
+                editUserInfoMenu(manager);
+                break;
+                
+            case 3: // Đổi mật khẩu
+                if (manager.hasPermission(PermissionType::CHANGE_OWN_PASSWORD)) {
+                    changePassword(manager);
+                } else {
+                    std::cout << "Ban khong co quyen doi mat khau!" << std::endl;
+                }
+                break;
+                
+            case 0: // Quay lại
+                break;
+                
+            default:
+                std::cout << "Lua chon khong hop le!" << std::endl;
+        }
+    } while (choice != 0);
+}
+
+// Chức năng người quản lý
+void managerFeatures(AccountManager& manager) {
+    if (!manager.isLoggedIn() || manager.getCurrentUserType() != AccountType::ADMIN) {
+        std::cout << "Ban khong co quyen truy cap chuc nang quan ly!" << std::endl;
+        return;
+    }
+    
+    int choice;
+    do {
+        std::cout << "\n=== CHUC NANG QUAN LY ===" << std::endl;
+        std::cout << "1. Xem danh sach nhom nguoi dung" << std::endl;
+        std::cout << "2. Tao tai khoan moi" << std::endl;
+        std::cout << "3. Chinh sua thong tin tai khoan (lam ho)" << std::endl;
+        std::cout << "4. Sao luu du lieu" << std::endl;
+        std::cout << "5. Phuc hoi du lieu" << std::endl;
+        std::cout << "0. Quay lai" << std::endl;
+        
+        std::cout << "Lua chon cua ban: ";
+        std::cin >> choice;
+        clearInputBuffer();
+        
+        switch (choice) {
+            case 1: // Xem danh sách nhóm người dùng
+                if (manager.hasPermission(PermissionType::VIEW_GROUP_LIST)) {
+                    manager.displayAllAccounts();
+                } else {
+                    std::cout << "Ban khong co quyen xem danh sach nhom!" << std::endl;
+                }
+                break;
+                
+            case 2: // Tạo tài khoản mới
+                if (manager.hasPermission(PermissionType::CREATE_ACCOUNT)) {
+                    registerNewAccount(manager);
+                } else {
+                    std::cout << "Ban khong co quyen tao tai khoan moi!" << std::endl;
+                }
+                break;
+                
+            case 3: // Chỉnh sửa thông tin tài khoản (làm hộ)
+                if (manager.hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+                    editOtherAccountMenu(manager);
+                } else {
+                    std::cout << "Ban khong co quyen chinh sua thong tin tai khoan khac!" << std::endl;
+                }
+                break;
+                
+            case 4: // Sao lưu dữ liệu
+                if (manager.hasPermission(PermissionType::BACKUP_DATA)) {
+                    manager.backupData();
+                } else {
+                    std::cout << "Ban khong co quyen sao luu du lieu!" << std::endl;
+                }
+                break;
+                
+            case 5: // Phục hồi dữ liệu
+                if (manager.hasPermission(PermissionType::RESTORE_DATA)) {
+                    manager.displayBackups();
+                    
+                    std::vector<std::string> backups = manager.listBackups();
+                    if (backups.empty()) {
+                        break;
+                    }
+                    
+                    int backupChoice;
+                    std::cout << "Chon ban sao luu de phuc hoi (1-" << backups.size() << "): ";
+                    std::cin >> backupChoice;
+                    clearInputBuffer();
+                    
+                    if (backupChoice < 1 || backupChoice > backups.size()) {
+                        std::cout << "Lua chon khong hop le!" << std::endl;
+                    } else {
+                        manager.restoreFromBackup(backups[backupChoice - 1]);
+                    }
+                } else {
+                    std::cout << "Ban khong co quyen phuc hoi du lieu!" << std::endl;
+                }
+                break;
+                
+            case 0: // Quay lại
+                break;
+                
+            default:
+                std::cout << "Lua chon khong hop le!" << std::endl;
+        }
+    } while (choice != 0);
+}
+
+// Menu chính
+void showMainMenu(bool isLoggedIn, AccountType userType) {
+    std::cout << "\nMENU CHINH:" << std::endl;
+    
+    if (!isLoggedIn) {
+        std::cout << "1. Dang ky tai khoan" << std::endl;
+        std::cout << "2. Dang nhap" << std::endl;
+    } else {
+        std::cout << "1. Chuc nang nguoi dung" << std::endl;
+        
+        if (userType == AccountType::ADMIN) {
+            std::cout << "2. Chuc nang quan ly" << std::endl;
+        }
+        
+        std::cout << "3. Dang xuat" << std::endl;
+    }
+    
     std::cout << "0. Thoat" << std::endl;
 }
 
+// Chương trình chính
 int main() {
     std::cout << "CHUONG TRINH QUAN LY TAI KHOAN" << std::endl;
     std::cout << "--------------------------------" << std::endl;
@@ -197,39 +509,53 @@ int main() {
     
     int choice;
     do {
-        showMenu();
+        bool isLoggedIn = manager.isLoggedIn();
+        AccountType userType = manager.getCurrentUserType();
+        
+        showMainMenu(isLoggedIn, userType);
         std::cout << "Lua chon cua ban: ";
         
         std::cin >> choice;
         clearInputBuffer();
         
-        switch (choice) {
-            case 1:
-                registerNewAccount(manager);
-                break;
-            case 2:
-                loginAccount(manager);
-                break;
-            case 3:
-                changePassword(manager);
-                break;
-            case 4:
-                logout(manager);
-                break;
-            case 5:
-                manager.displayAllAccounts();
-                break;
-            case 6:
-                backupData(manager);
-                break;
-            case 7:
-                restoreData(manager);
-                break;
-            case 0:
-                std::cout << "Tam biet!" << std::endl;
-                break;
-            default:
-                std::cout << "Lua chon khong hop le!" << std::endl;
+        if (!isLoggedIn) {
+            // Menu khi chưa đăng nhập
+            switch (choice) {
+                case 1: // Đăng ký
+                    registerNewAccount(manager);
+                    break;
+                case 2: // Đăng nhập
+                    loginAccount(manager);
+                    break;
+                case 0: // Thoát
+                    std::cout << "Tam biet!" << std::endl;
+                    break;
+                default:
+                    std::cout << "Lua chon khong hop le!" << std::endl;
+            }
+        } else {
+            // Menu khi đã đăng nhập
+            switch (choice) {
+                case 1: // Chức năng người dùng thông thường
+                    userFeatures(manager);
+                    break;
+                case 2: // Chức năng quản lý
+                    if (userType == AccountType::ADMIN) {
+                        managerFeatures(manager);
+                    } else {
+                        std::cout << "Lua chon khong hop le!" << std::endl;
+                    }
+                    break;
+                case 3: // Đăng xuất
+                    manager.logout();
+                    std::cout << "Da dang xuat thanh cong!" << std::endl;
+                    break;
+                case 0: // Thoát
+                    std::cout << "Tam biet!" << std::endl;
+                    break;
+                default:
+                    std::cout << "Lua chon khong hop le!" << std::endl;
+            }
         }
     } while (choice != 0);
     

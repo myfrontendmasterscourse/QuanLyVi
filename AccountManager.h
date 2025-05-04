@@ -2,9 +2,9 @@
 #define ACCOUNT_MANAGER_H
 
 #include "Account.h"
+#include "Permission.h"
 #include <vector>
 #include <string>
-#include <memory>
 #include <filesystem>
 #include <optional>
 
@@ -12,13 +12,16 @@ class AccountManager {
 private:
     std::vector<Account> accounts;
     std::string dataFilePath;
-    std::optional<std::string> currentLoggedInUser; // Lưu trữ tên người dùng đang đăng nhập
-    std::string generateRandomPassword(size_t length = 10); // Tạo mật khẩu ngẫu nhiên
-
+    std::optional<std::string> currentLoggedInUser;
+    PermissionManager permissionManager;
+    
+    // Phương thức sinh mật khẩu ngẫu nhiên
+    std::string generateRandomPassword(size_t length = 10);
+    
 public:
     AccountManager(const std::string& dataFilePath = "accounts.txt");
     
-    // Account registration
+    // Đăng ký tài khoản
     bool registerAccount(const User& user, const std::string& username, 
                         const std::string& password, 
                         AccountType type = AccountType::REGULAR,
@@ -39,27 +42,43 @@ public:
     std::string getCurrentUser() const { return currentLoggedInUser.value_or(""); }
     void logout() { currentLoggedInUser.reset(); }
     
-    // Check if username already exists
+    // Phương thức kiểm tra quyền và lấy thông tin tài khoản đang đăng nhập
+    bool hasPermission(PermissionType permission) const;
+    AccountType getCurrentUserType() const;
+    const Account* getCurrentAccount() const;
+    
+    // Cập nhật từng trường thông tin người dùng
+    bool updateUserFullName(const std::string& username, const std::string& newFullName);
+    bool updateUserDateOfBirth(const std::string& username, const std::string& newDOB);
+    bool updateUserAddress(const std::string& username, const std::string& newAddress);
+    bool updateUserPhone(const std::string& username, const std::string& newPhone);
+    bool updateUserEmail(const std::string& username, const std::string& newEmail);
+    
+    // Cập nhật thông tin người dùng (tất cả các trường)
+    bool updateUserInfo(const std::string& username, const User& newUserInfo);
+    
+    // Check if username exists
     bool usernameExists(const std::string& username) const;
     
-    // Find account by username
+    // Find account by username (cả hai phiên bản)
     Account* findAccount(const std::string& username);
+    const Account* findAccount(const std::string& username) const;
     
-    // Display all accounts
+    // Display all accounts (danh sách nhóm)
     void displayAllAccounts() const;
+    void displayOwnAccount() const;
     
-    // Save accounts to file
+    // Save, load, backup, restore
     bool saveToFile(const std::string& filename = "") const;
-    
-    // Load accounts from file
     bool loadFromFile(const std::string& filename = "");
-    
-    // Backup functionality
     bool backupData() const;
     bool restoreFromBackup(const std::string& backupFilename);
     std::vector<std::string> listBackups() const;
     void rotateBackups(int keepCount = 5);
     void displayBackups() const;
+    
+    // Hiển thị quyền của loại tài khoản
+    void displayPermissions(AccountType accountType) const;
 };
 
 #endif // ACCOUNT_MANAGER_H

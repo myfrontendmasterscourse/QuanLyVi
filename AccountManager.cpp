@@ -55,25 +55,12 @@ std::string AccountManager::registerAccountWithAutoPassword(const User& user, co
 
 // Phương thức sinh mật khẩu ngẫu nhiên (thay thế PasswordHasher::generatePassword)
 std::string AccountManager::generateRandomPassword(size_t length) {
-    const char charset[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*";
-    const size_t charset_size = sizeof(charset) - 1;
-    
-    std::random_device rd;
-    std::mt19937 generator(rd());
-    std::uniform_int_distribution<int> distribution(0, charset_size - 1);
-    
-    std::string password;
-    password.reserve(length);
-    for (size_t i = 0; i < length; ++i) {
-        password += charset[distribution(generator)];
-    }
-    return password;
+    // Sử dụng PasswordHasher để sinh mật khẩu
+    return PasswordHasher::generatePassword(length);
 }
 
-// Đăng nhập với debug
+// Cập nhật phương thức login với ít log hơn
 bool AccountManager::login(const std::string& username, const std::string& password) {
-    std::cout << "Dang kiem tra dang nhap cho tai khoan: " << username << std::endl;
-    
     Account* account = findAccount(username);
     
     if (!account) {
@@ -81,18 +68,12 @@ bool AccountManager::login(const std::string& username, const std::string& passw
         return false;
     }
     
-    std::cout << "Da tim thay tai khoan, dang kiem tra mat khau..." << std::endl;
-    
     if (!account->isAccountActive()) {
         std::cout << "Tai khoan da bi khoa!" << std::endl;
         return false;
     }
     
-    // Thêm thông tin debug
-    std::cout << "Mat khau nhap vao: " << password << std::endl;
-    
     bool validPassword = account->validatePassword(password);
-    std::cout << "Ket qua xac thuc mat khau: " << (validPassword ? "Thanh cong" : "That bai") << std::endl;
     
     if (!validPassword) {
         std::cout << "Mat khau khong chinh xac!" << std::endl;
@@ -157,19 +138,25 @@ bool AccountManager::usernameExists(const std::string& username) const {
                       });
 }
 
+// Phiên bản non-const (đã có)
 Account* AccountManager::findAccount(const std::string& username) {
-    std::cout << "Tim kiem tai khoan voi username: '" << username << "'" << std::endl;
-    std::cout << "So luong tai khoan hien co: " << accounts.size() << std::endl;
-    
     for (auto& account : accounts) {
-        std::cout << "Kiem tra tai khoan: '" << account.getUsername() << "'" << std::endl;
         if (account.getUsername() == username) {
-            std::cout << "Da tim thay tai khoan!" << std::endl;
             return &account;
         }
     }
     
-    std::cout << "Khong tim thay tai khoan!" << std::endl;
+    return nullptr;
+}
+
+// Phiên bản const mới
+const Account* AccountManager::findAccount(const std::string& username) const {
+    for (const auto& account : accounts) {
+        if (account.getUsername() == username) {
+            return &account;
+        }
+    }
+    
     return nullptr;
 }
 
@@ -195,8 +182,6 @@ bool AccountManager::loadFromFile(const std::string& filename) {
             return false;
         }
         
-        std::cout << "Bat dau tai du lieu tu file: " << loadFilename << std::endl;
-        
         std::ifstream file(loadFilename);
         if (!file.is_open()) {
             std::cerr << "Khong the mo file de doc: " << loadFilename << std::endl;
@@ -207,32 +192,18 @@ bool AccountManager::loadFromFile(const std::string& filename) {
         file >> accountCount;
         file.ignore();
         
-        std::cout << "So luong tai khoan can tai: " << accountCount << std::endl;
-        
         accounts.clear();
         
         for (size_t i = 0; i < accountCount; ++i) {
             std::string accountStr;
             std::getline(file, accountStr);
             if (!accountStr.empty()) {
-                std::cout << "Doc dong tai khoan thu " << i+1 << ": " << accountStr << std::endl;
-                
                 Account account = Account::fromString(accountStr);
-                std::cout << "Username doc duoc: " << account.getUsername() << std::endl;
-                
                 accounts.push_back(account);
             }
         }
         
         file.close();
-        
-        std::cout << "Da tai " << accounts.size() << " tai khoan." << std::endl;
-        
-        // Hiển thị tất cả tài khoản đã tải
-        std::cout << "=== Tai khoan da tai ===" << std::endl;
-        for (const auto& acc : accounts) {
-            std::cout << "Username: " << acc.getUsername() << std::endl;
-        }
         
         return true;
     } catch (const std::exception& e) {
@@ -347,4 +318,219 @@ void AccountManager::rotateBackups(int keepCount) {
             std::cout << "Da xoa ban sao luu cu: " << backupFiles[i] << std::endl;
         }
     }
+}
+
+// Thêm các phương thức mới vào AccountManager.cpp
+
+// Sửa phương thức hasPermission
+bool AccountManager::hasPermission(PermissionType permission) const {
+    if (!isLoggedIn()) {
+        return false;
+    }
+    
+    // Thay đổi kiểu từ Account* sang const Account*
+    const Account* account = findAccount(currentLoggedInUser.value());
+    if (!account) {
+        return false;
+    }
+    
+    return permissionManager.hasPermission(account->getAccountType(), permission);
+}
+
+// Sửa phương thức getCurrentUserType
+AccountType AccountManager::getCurrentUserType() const {
+    if (!isLoggedIn()) {
+        // Trả về REGULAR làm mặc định
+        return AccountType::REGULAR;
+    }
+    
+    // Thay đổi kiểu từ Account* sang const Account*
+    const Account* account = findAccount(currentLoggedInUser.value());
+    if (!account) {
+        return AccountType::REGULAR;
+    }
+    
+    return account->getAccountType();
+}
+
+// Lấy tài khoản đang đăng nhập
+const Account* AccountManager::getCurrentAccount() const {
+    if (!isLoggedIn()) {
+        return nullptr;
+    }
+    
+    return findAccount(currentLoggedInUser.value());
+}
+
+// Cập nhật họ tên
+bool AccountManager::updateUserFullName(const std::string& username, const std::string& newFullName) {
+    Account* account = findAccount(username);
+    
+    if (!account) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return false;
+    }
+    
+    // Kiểm tra quyền
+    bool canEdit = false;
+    if (isLoggedIn()) {
+        if (getCurrentUser() == username && hasPermission(PermissionType::EDIT_OWN_FULLNAME)) {
+            canEdit = true; // Người dùng sửa thông tin của chính mình
+        } else if (getCurrentUser() != username && hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+            canEdit = true; // Người quản lý sửa thông tin của người khác
+        }
+    }
+    
+    if (!canEdit) {
+        std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+    
+    account->getUser().setFullName(newFullName);
+    saveToFile();
+    
+    std::cout << "Da cap nhat ho ten thanh cong!" << std::endl;
+    return true;
+}
+
+// Cập nhật ngày sinh
+bool AccountManager::updateUserDateOfBirth(const std::string& username, const std::string& newDOB) {
+    Account* account = findAccount(username);
+    
+    if (!account) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return false;
+    }
+    
+    // Kiểm tra quyền
+    bool canEdit = false;
+    if (isLoggedIn()) {
+        if (getCurrentUser() == username && hasPermission(PermissionType::EDIT_OWN_DOB)) {
+            canEdit = true; // Người dùng sửa thông tin của chính mình
+        } else if (getCurrentUser() != username && hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+            canEdit = true; // Người quản lý sửa thông tin của người khác
+        }
+    }
+    
+    if (!canEdit) {
+        std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+    
+    account->getUser().setDateOfBirth(newDOB);
+    saveToFile();
+    
+    std::cout << "Da cap nhat ngay sinh thanh cong!" << std::endl;
+    return true;
+}
+
+// Cập nhật địa chỉ
+bool AccountManager::updateUserAddress(const std::string& username, const std::string& newAddress) {
+    Account* account = findAccount(username);
+    
+    if (!account) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return false;
+    }
+    
+    // Kiểm tra quyền
+    bool canEdit = false;
+    if (isLoggedIn()) {
+        if (getCurrentUser() == username && hasPermission(PermissionType::EDIT_OWN_ADDRESS)) {
+            canEdit = true; // Người dùng sửa thông tin của chính mình
+        } else if (getCurrentUser() != username && hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+            canEdit = true; // Người quản lý sửa thông tin của người khác
+        }
+    }
+    
+    if (!canEdit) {
+        std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+    
+    account->getUser().setAddress(newAddress);
+    saveToFile();
+    
+    std::cout << "Da cap nhat dia chi thanh cong!" << std::endl;
+    return true;
+}
+
+// Cập nhật số điện thoại
+bool AccountManager::updateUserPhone(const std::string& username, const std::string& newPhone) {
+    Account* account = findAccount(username);
+    
+    if (!account) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return false;
+    }
+    
+    // Kiểm tra quyền
+    bool canEdit = false;
+    if (isLoggedIn()) {
+        if (getCurrentUser() == username && hasPermission(PermissionType::EDIT_OWN_PHONE)) {
+            canEdit = true; // Người dùng sửa thông tin của chính mình
+        } else if (getCurrentUser() != username && hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+            canEdit = true; // Người quản lý sửa thông tin của người khác
+        }
+    }
+    
+    if (!canEdit) {
+        std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+    
+    account->getUser().setPhoneNumber(newPhone);
+    saveToFile();
+    
+    std::cout << "Da cap nhat so dien thoai thanh cong!" << std::endl;
+    return true;
+}
+
+// Cập nhật email
+bool AccountManager::updateUserEmail(const std::string& username, const std::string& newEmail) {
+    Account* account = findAccount(username);
+    
+    if (!account) {
+        std::cout << "Khong tim thay tai khoan!" << std::endl;
+        return false;
+    }
+    
+    // Kiểm tra quyền
+    bool canEdit = false;
+    if (isLoggedIn()) {
+        if (getCurrentUser() == username && hasPermission(PermissionType::EDIT_OWN_EMAIL)) {
+            canEdit = true; // Người dùng sửa thông tin của chính mình
+        } else if (getCurrentUser() != username && hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+            canEdit = true; // Người quản lý sửa thông tin của người khác
+        }
+    }
+    
+    if (!canEdit) {
+        std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+    
+    account->getUser().setEmail(newEmail);
+    saveToFile();
+    
+    std::cout << "Da cap nhat email thanh cong!" << std::endl;
+    return true;
+}
+
+// Hiển thị thông tin tài khoản của người dùng đang đăng nhập
+void AccountManager::displayOwnAccount() const {
+    if (!isLoggedIn()) {
+        std::cout << "Ban chua dang nhap!" << std::endl;
+        return;
+    }
+    
+    const Account* account = getCurrentAccount();
+    if (account) {
+        account->displayInfo();
+    }
+}
+
+// Hiển thị quyền của loại tài khoản
+void AccountManager::displayPermissions(AccountType accountType) const {
+    permissionManager.displayPermissions(accountType);
 }
