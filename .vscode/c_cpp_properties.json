@@ -1,0 +1,19 @@
+{
+  "configurations": [
+    {
+      "name": "Win32",
+      "includePath": [
+        "${workspaceFolder}/**",
+        "C:/mingw64/lib/gcc/mingw32/*/include/c++/**", // Thay đổi đường dẫn phù hợp với hệ thống của bạn
+        "C:/mingw64/lib/gcc/mingw32/*/include/c++/mingw32/**",
+        "C:/mingw64/include/**"
+      ],
+      "defines": ["_DEBUG", "UNICODE", "_UNICODE"],
+      "compilerPath": "C:/mingw64/bin/g++.exe", // Thay đổi đúng đường dẫn tới compiler
+      "cStandard": "c17",
+      "cppStandard": "c++20",
+      "intelliSenseMode": "windows-gcc-x64"
+    }
+  ],
+  "version": 4
+}
