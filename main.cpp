@@ -2,6 +2,8 @@
 #include <string>
 #include <limits>
 #include "AccountManager.h"
+#include "WalletManager.h"
+
 
 void clearInputBuffer() {
     std::cin.clear();
@@ -37,7 +39,7 @@ User inputUserInfo() {
     return user;
 }
 
-void registerNewAccount(AccountManager& manager) {
+void registerNewAccount(AccountManager& manager, WalletManager& walletManager) {
     std::string username, password;
     AccountType type = AccountType::REGULAR;
     char choice;
@@ -78,6 +80,8 @@ void registerNewAccount(AccountManager& manager) {
         // Đăng ký tài khoản
         manager.registerAccount(newUser, username, password, type, false);
     }
+    
+    walletManager.addWalletToFile(username, 0);
 }
 
 void loginAccount(AccountManager& manager) {
@@ -394,7 +398,7 @@ void userFeatures(AccountManager& manager) {
 }
 
 // Chức năng người quản lý
-void managerFeatures(AccountManager& manager) {
+void managerFeatures(AccountManager& manager, WalletManager& walletManager) {
     if (!manager.isLoggedIn() || manager.getCurrentUserType() != AccountType::ADMIN) {
         std::cout << "Ban khong co quyen truy cap chuc nang quan ly!" << std::endl;
         return;
@@ -425,7 +429,7 @@ void managerFeatures(AccountManager& manager) {
                 
             case 2: // Tạo tài khoản mới
                 if (manager.hasPermission(PermissionType::CREATE_ACCOUNT)) {
-                    registerNewAccount(manager);
+                    registerNewAccount(manager, walletManager);
                 } else {
                     std::cout << "Ban khong co quyen tao tai khoan moi!" << std::endl;
                 }
@@ -495,9 +499,70 @@ void showMainMenu(bool isLoggedIn, AccountType userType) {
         }
         
         std::cout << "3. Dang xuat" << std::endl;
+        std::cout << "4. Chuc nang vi" << std::endl;
     }
     
     std::cout << "0. Thoat" << std::endl;
+}
+
+void printTransactionHistoryByUsername(WalletManager& walletManager, const std::string& username) {
+        std::vector<std::string> history = walletManager.getTransactionHistoryByUsername(username);
+        if (history.empty()) {
+            std::cout << "\n⚠️  Không có giao dịch nào cho người dùng này.\n";
+            return;
+        }
+        std::cout << "\n=== LỊCH SỬ GIAO DỊCH CỦA " << username << " ===" << std::endl;
+        for (const auto& line : history) {
+            std::cout << line << std::endl;
+        }
+    }
+
+
+void walletServices(AccountManager& manager, WalletManager& walletManager) {
+    int choice;
+    do {
+        std::cout << "\n=== CHUC NANG VI ===" << std::endl;
+        std::cout << "1. Xem so du vi" << std::endl;
+        std::cout << "2. Chuyen diem" << std::endl;
+        std::cout << "3. Lich su giao dich" << std::endl;
+        std::cout << "0. Quay lai" << std::endl;
+        
+        std::cout << "Lua chon cua ban: ";
+        std::cin >> choice;
+        clearInputBuffer();
+        
+        switch (choice) {
+            case 1:
+             std::cout << "So du hien tai cua ban: " << walletManager.getBalanceByUsername(manager.getCurrentUser()) << " diem.\n";
+            break;
+            case 2:
+                {
+                    std::string toUsername;
+                    int amount;
+
+                    std::cout << "=== Nhap thong tin chuyen diem ===" << std::endl;
+
+                    std::cout << "Nhap ten nguoi nhan: ";
+                    std::getline(std::cin, toUsername);
+
+                    std::cout << "Nhap so diem can chuyen: ";
+                    std::cin >> amount;
+                    clearInputBuffer();
+
+                    std::string fromUsername = manager.getCurrentUser();
+                    walletManager.transferPointsFromUserToUser(fromUsername, toUsername, amount);
+                    break;
+                }
+            case 3:
+                printTransactionHistoryByUsername(walletManager, manager.getCurrentUser());
+                break;
+            case 0:
+                break;
+                
+            default:
+                std::cout << "Lua chon khong hop le!" << std::endl;
+        }
+    } while (choice != 0);
 }
 
 // Chương trình chính
@@ -506,6 +571,8 @@ int main() {
     std::cout << "--------------------------------" << std::endl;
     
     AccountManager manager("accounts.txt");
+    WalletManager walletManager("wallets.txt");
+
     
     int choice;
     do {
@@ -522,7 +589,7 @@ int main() {
             // Menu khi chưa đăng nhập
             switch (choice) {
                 case 1: // Đăng ký
-                    registerNewAccount(manager);
+                    registerNewAccount(manager, walletManager);
                     break;
                 case 2: // Đăng nhập
                     loginAccount(manager);
@@ -541,7 +608,7 @@ int main() {
                     break;
                 case 2: // Chức năng quản lý
                     if (userType == AccountType::ADMIN) {
-                        managerFeatures(manager);
+                        managerFeatures(manager, walletManager);
                     } else {
                         std::cout << "Lua chon khong hop le!" << std::endl;
                     }
@@ -550,6 +617,10 @@ int main() {
                     manager.logout();
                     std::cout << "Da dang xuat thanh cong!" << std::endl;
                     break;
+                case 4: {
+                    walletServices(manager, walletManager);
+                    break;
+                }
                 case 0: // Thoát
                     std::cout << "Tam biet!" << std::endl;
                     break;
