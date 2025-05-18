@@ -12,8 +12,7 @@ Dự án được phát triển bằng ngôn ngữ C++, không sử dụng thư 
 
 | Họ và tên       | MSV        | Công việc đảm nhiệm                                  |
 |-----------------|----------  |------------------------------------------------------|
-| Nguyễn Hữu Đạt  | K24DTCN179 | Xử lý đăng ký, đăng nhập và quản lý tài khoản 
-                               |Giao diện người dùng và lưu trữ lịch sử giao dịch
+| Nguyễn Hữu Đạt  | K24DTCN179 |Đăng ký, Đăng nhập và quản lý tài khoản, Giao diện    |
 | Vũ Thị Yến      | K24DTCN251 | OTP xác thực hai lớp, sinh mật khẩu ,README.md       |
 | Trần Đăng Khôi  | K24DTCN204 | Quản lý hoạt động ví                                 | 
 
