@@ -12,7 +12,7 @@ WalletManager::WalletManager(const std::string& walletFilePath)
 void WalletManager::addWalletToFile(const Wallet& wallet) {
     std::ofstream outFile(walletFilePath, std::ios::app);
     if (!outFile.is_open()) {
-        std::cerr << "❌ Không thể mở file để ghi: " << walletFilePath << std::endl;
+        std::cerr << "Khong the mo file de ghi: " << walletFilePath << std::endl;
         return;
     }
 
@@ -45,7 +45,7 @@ std::vector<Wallet> WalletManager::loadWallets() {
                 int point = std::stoi(pointStr);
                 wallets.emplace_back(walletId, username, point);
             } catch (...) {
-                std::cerr << "⚠️ Dòng bị lỗi khi chuyển point sang số: " << line << std::endl;
+                std::cerr << "Dong bi loi khi chuyen point sang so: " << line << std::endl;
             }
         }
     }
@@ -95,7 +95,7 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
         std::string toUser = (toIndex != -1) ? wallets[toIndex].getUsername() : toUsername;
         std::string toId = (toIndex != -1) ? wallets[toIndex].getWalletId() : "unknownid";
         logTransaction(fromId.empty() ? "unknownid" : fromId, toId, fromUser, toUser, amount, "Thất bại: Không tìm thấy ví gửi/nhận");
-        std::cerr << "❌ Không tìm thấy ví gửi hoặc nhận.\n";
+        std::cerr << "Khong tim thay vi gui hoac nhan.\n";
         return false;
     }
 
@@ -104,7 +104,7 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
 
     if (fromWallet.getPoint() < amount) {
         logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thất bại: Không đủ điểm");
-        std::cerr << "❌ Không đủ điểm để chuyển.\n";
+        std::cerr << "Khong du diem de chuyen.\n";
         return false;
     }
 
@@ -114,7 +114,7 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
 
     std::ofstream outFile(walletFilePath, std::ios::trunc);
     if (!outFile.is_open()) {
-        std::cerr << "❌ Không thể ghi lại file ví. Giao dịch bị hủy.\n";
+        std::cerr << "Khong the ghi lai file vi. Giao dich bi huy.\n";
         return false;
     }
     for (const Wallet& wallet : wallets) {
@@ -125,14 +125,14 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
     outFile.close();
 
     logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thành công");
-    std::cout << "✅ Giao dịch thành công: " << amount << " điểm từ " << fromUsername << " đến người dùng " << toUsername << "\n";
+    std::cout << "Giao dich thanh cong: " << amount << " điểm từ " << fromUsername << " đến người dùng " << toUsername << "\n";
     return true;
 }
 
 void WalletManager::logTransaction(const std::string& fromId, const std::string& toId, const std::string& fromUsername, const std::string& toUsername, int amount, const std::string& status) {
     std::ofstream logFile(transactionFilePath, std::ios::app);
     if (!logFile.is_open()) {
-        std::cerr << "❌ Không thể mở file giao dịch." << std::endl;
+        std::cerr << "Khong the mo file giao dich." << std::endl;
         return;
     }
 
@@ -165,14 +165,14 @@ std::vector<std::string> WalletManager::getTransactionHistoryByUsername(const st
     std::vector<std::string> history;
     std::ifstream inFile(transactionFilePath);
     if (!inFile.is_open()) {
-        std::cerr << "❌ Không thể mở file lịch sử giao dịch." << std::endl;
+        std::cerr << "Khong the mo file lich su giao dich." << std::endl;
         return history;
     }
 
     // Lấy walletId từ username
     Wallet* userWallet = findWalletByUsername(username);
     if (!userWallet) {
-        std::cerr << "❌ Không tìm thấy ví người dùng: " << username << std::endl;
+        std::cerr << "Khong tim thay vi nguoi dung: " << username << std::endl;
         return history;
     }
     std::string userWalletId = userWallet->getWalletId();
