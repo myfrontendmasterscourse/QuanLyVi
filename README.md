@@ -14,7 +14,7 @@ Dự án được phát triển bằng ngôn ngữ C++, không sử dụng thư 
 |-----------------|----------  |------------------------------------------------------|
 | Nguyễn Hữu Đạt  | K24DTCN179 |Đăng ký, Đăng nhập và quản lý tài khoản, Giao diện    |
 | Vũ Thị Yến      | K24DTCN251 | OTP xác thực hai lớp, sinh mật khẩu ,README.md       |
-| Trần Đăng Khôi  | K24DTCN204 | Quản lý hoạt động ví                                 | 
+| Trần Quang Khôi  | K24DTCN204 | Quản lý hoạt động ví                                 | 
 
 
 3, Phân tích và đặc tả chức năng
