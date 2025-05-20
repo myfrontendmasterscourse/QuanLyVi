@@ -82,6 +82,7 @@ void registerNewAccount(AccountManager& manager, WalletManager& walletManager) {
     }
     
     walletManager.addWalletToFile(username, 0);
+    walletManager.transferPointsFromUserToUser("admin", username, 100);
 }
 
 void loginAccount(AccountManager& manager) {
@@ -498,8 +499,8 @@ void showMainMenu(bool isLoggedIn, AccountType userType) {
             std::cout << "2. Chuc nang quan ly" << std::endl;
         }
         
-        std::cout << "3. Dang xuat" << std::endl;
-        std::cout << "4. Chuc nang vi" << std::endl;
+        std::cout << "3. Chuc nang vi" << std::endl;
+        std::cout << "4. Dang xuat" << std::endl;
     }
     
     std::cout << "0. Thoat" << std::endl;
@@ -508,10 +509,10 @@ void showMainMenu(bool isLoggedIn, AccountType userType) {
 void printTransactionHistoryByUsername(WalletManager& walletManager, const std::string& username) {
         std::vector<std::string> history = walletManager.getTransactionHistoryByUsername(username);
         if (history.empty()) {
-            std::cout << "\n⚠️  Không có giao dịch nào cho người dùng này.\n";
+            std::cout << "\n⚠️  Khong co giao dich nao cua nguoi dung nay.\n";
             return;
         }
-        std::cout << "\n=== LỊCH SỬ GIAO DỊCH CỦA " << username << " ===" << std::endl;
+        std::cout << "\n=== LICH SU GIAO DICH CUA " << username << " ===" << std::endl;
         for (const auto& line : history) {
             std::cout << line << std::endl;
         }
@@ -537,20 +538,8 @@ void walletServices(AccountManager& manager, WalletManager& walletManager) {
             break;
             case 2:
                 {
-                    std::string toUsername;
-                    int amount;
-
-                    std::cout << "=== Nhap thong tin chuyen diem ===" << std::endl;
-
-                    std::cout << "Nhap ten nguoi nhan: ";
-                    std::getline(std::cin, toUsername);
-
-                    std::cout << "Nhap so diem can chuyen: ";
-                    std::cin >> amount;
-                    clearInputBuffer();
-
                     std::string fromUsername = manager.getCurrentUser();
-                    walletManager.transferPointsFromUserToUser(fromUsername, toUsername, amount);
+                    walletManager.transferPointsFromUserToUser(fromUsername);
                     break;
                 }
             case 3:
@@ -614,11 +603,11 @@ int main() {
                     }
                     break;
                 case 3: // Đăng xuất
-                    manager.logout();
-                    std::cout << "Da dang xuat thanh cong!" << std::endl;
+                    walletServices(manager, walletManager);
                     break;
                 case 4: {
-                    walletServices(manager, walletManager);
+                    manager.logout();
+                    std::cout << "Da dang xuat thanh cong!" << std::endl;
                     break;
                 }
                 case 0: // Thoát
