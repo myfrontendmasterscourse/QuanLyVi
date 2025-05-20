@@ -116,6 +116,18 @@ bool AccountManager::changePassword(const std::string &username, const std::stri
         return false;
     }
 
+    if (isLoggedIn() && getCurrentUser() == username && !hasPermission(PermissionType::EDIT_OTHER_ACCOUNT)) {
+        std::string generatedOtp = otpManager.generateOTP(username);
+        std::string enteredOtp;
+        std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+        std::cout << "Vui long nhap lai ma OTP de xac nhan doi mat khau: ";
+        std::getline(std::cin, enteredOtp);
+        if (!otpManager.verifyOTP(username, enteredOtp)) {
+            std::cout << "OTP khong hop le hoac het han. Doi mat khau bi huy!" << std::endl;
+            return false;
+        }
+    }
+
     if (!account->validatePassword(oldPassword))
     {
         std::cout << "Mat khau cu khong chinh xac!" << std::endl;
@@ -138,6 +150,16 @@ bool AccountManager::forceChangePassword(const std::string &username, const std:
     if (!account)
     {
         std::cout << "Ten dang nhap khong ton tai!" << std::endl;
+        return false;
+    }
+
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan doi mat khau: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Doi mat khau bi huy!" << std::endl;
         return false;
     }
 
@@ -461,6 +483,16 @@ bool AccountManager::updateUserFullName(const std::string &username, const std::
         return false;
     }
 
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan thay doi thong tin: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Thay doi thong tin bi huy!" << std::endl;
+        return false;
+    }
+
     account->getUser().setFullName(newFullName);
     saveToFile();
 
@@ -496,6 +528,16 @@ bool AccountManager::updateUserDateOfBirth(const std::string &username, const st
     if (!canEdit)
     {
         std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan thay doi thong tin: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Thay doi thong tin bi huy!" << std::endl;
         return false;
     }
 
@@ -537,6 +579,16 @@ bool AccountManager::updateUserAddress(const std::string &username, const std::s
         return false;
     }
 
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan thay doi thong tin: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Thay doi thong tin bi huy!" << std::endl;
+        return false;
+    }
+
     account->getUser().setAddress(newAddress);
     saveToFile();
 
@@ -575,6 +627,16 @@ bool AccountManager::updateUserPhone(const std::string &username, const std::str
         return false;
     }
 
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan thay doi thong tin: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Thay doi thong tin bi huy!" << std::endl;
+        return false;
+    }
+
     account->getUser().setPhoneNumber(newPhone);
     saveToFile();
 
@@ -610,6 +672,16 @@ bool AccountManager::updateUserEmail(const std::string &username, const std::str
     if (!canEdit)
     {
         std::cout << "Ban khong co quyen sua thong tin nay!" << std::endl;
+        return false;
+    }
+
+    std::string generatedOtp = otpManager.generateOTP(username);
+    std::string enteredOtp;
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";
+    std::cout << "Vui long nhap lai ma OTP de xac nhan thay doi thong tin: ";
+    std::getline(std::cin, enteredOtp);
+    if (!otpManager.verifyOTP(username, enteredOtp)) {
+        std::cout << "OTP khong hop le hoac het han. Thay doi thong tin bi huy!" << std::endl;
         return false;
     }
 
