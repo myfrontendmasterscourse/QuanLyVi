@@ -1,5 +1,6 @@
 // WalletManager.cpp
 #include "WalletManager.h"
+#include "OTPManager.h"
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -79,7 +80,14 @@ std::string WalletManager::generateNextWalletId() {
     return std::to_string(maxId + 1);
 }
 
-bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername, const std::string& toUsername, int amount) {
+bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername) {
+                    int amount;
+                    std::string toUsername;
+                    std::cout << "=== Nhap thong tin chuyen diem ===" << std::endl;
+
+                    std::cout << "Nhap ten nguoi nhan: ";
+                    std::getline(std::cin, toUsername);
+
     std::vector<Wallet> wallets = loadWallets();
     int fromIndex = -1, toIndex = -1;
 
@@ -94,7 +102,7 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
         std::string fromUser = (fromIndex != -1) ? wallets[fromIndex].getUsername() : fromUsername;
         std::string toUser = (toIndex != -1) ? wallets[toIndex].getUsername() : toUsername;
         std::string toId = (toIndex != -1) ? wallets[toIndex].getWalletId() : "unknownid";
-        logTransaction(fromId.empty() ? "unknownid" : fromId, toId, fromUser, toUser, amount, "Thất bại: Không tìm thấy ví gửi/nhận");
+        logTransaction(fromId.empty() ? "unknownid" : fromId, toId, fromUser, toUser, amount, "That bai: Khong tim thay vi gui/nhan");
         std::cerr << "Khong tim thay vi gui hoac nhan.\n";
         return false;
     }
@@ -102,9 +110,27 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
     Wallet& fromWallet = wallets[fromIndex];
     Wallet& toWallet = wallets[toIndex];
 
+    std::cout << "Nhap so diem can chuyen: ";
+    std::cin >> amount;
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+
     if (fromWallet.getPoint() < amount) {
-        logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thất bại: Không đủ điểm");
+        logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "That bai: Khong du diem");
         std::cerr << "Khong du diem de chuyen.\n";
+        return false;
+    }
+
+    OTPManager otpManager;
+    std::string generatedOtp = otpManager.generateOTP(fromUsername);
+    std::string enteredOtp;
+
+    std::cout << "Nhap ma OTP da duoc sinh: " << generatedOtp << "\n";  // de test, ban co the an otp
+    std::cout << "Vui long nhap lai ma OTP de xac nhan giao dich: ";
+    std::getline(std::cin, enteredOtp);
+
+    if (!otpManager.verifyOTP(fromUsername, enteredOtp)) {
+        std::cerr << "OTP khong hop le hoac het han. Giao dich bi huy.";
         return false;
     }
 
@@ -124,8 +150,61 @@ bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername
     }
     outFile.close();
 
-    logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thành công");
-    std::cout << "Giao dich thanh cong: " << amount << " điểm từ " << fromUsername << " đến người dùng " << toUsername << "\n";
+    logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thanh cong");
+    std::cout << "Giao dich thanh cong: " << amount << " diem tu " << fromUsername << " den nguoi dung " << toUsername << "\n";
+    return true;
+}
+
+bool WalletManager::transferPointsFromUserToUser(const std::string& fromUsername, const std::string& toUsername, int amount) {
+    std::vector<Wallet> wallets = loadWallets();
+    int fromIndex = -1, toIndex = -1;
+
+    // Tìm chỉ số ví gửi và ví nhận theo username
+    for (size_t i = 0; i < wallets.size(); ++i) {
+        if (wallets[i].getUsername() == fromUsername) fromIndex = i;
+        if (wallets[i].getUsername() == toUsername) toIndex = i;
+    }
+
+    if (fromIndex == -1 || toIndex == -1) {
+        std::string fromId = (fromIndex != -1) ? wallets[fromIndex].getWalletId() : "";
+        std::string fromUser = (fromIndex != -1) ? wallets[fromIndex].getUsername() : fromUsername;
+        std::string toUser = (toIndex != -1) ? wallets[toIndex].getUsername() : toUsername;
+        std::string toId = (toIndex != -1) ? wallets[toIndex].getWalletId() : "unknownid";
+        logTransaction(fromId.empty() ? "unknownid" : fromId, toId, fromUser, toUser, amount, "That bai: Khong tim thay vi gui/nhan");
+        std::cerr << "Khong tim thay vi gui hoac nhan.\n";
+        return false;
+    }
+
+    Wallet& fromWallet = wallets[fromIndex];
+    Wallet& toWallet = wallets[toIndex];
+
+    if (fromWallet.getPoint() < amount) {
+        logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "That bai: Khong du diem");
+        std::cerr << "Khong du diem de chuyen.\n";
+        return false;
+    }
+
+    OTPManager otpManager;
+    std::string generatedOtp = otpManager.generateOTP(fromUsername);
+    std::string enteredOtp;
+    // Bắt đầu giao dịch (atomic)
+    fromWallet.setPoint(fromWallet.getPoint() - amount);
+    toWallet.setPoint(toWallet.getPoint() + amount);
+
+    std::ofstream outFile(walletFilePath, std::ios::trunc);
+    if (!outFile.is_open()) {
+        std::cerr << "Khong the ghi lai file vi. Giao dich bi huy.\n";
+        return false;
+    }
+    for (const Wallet& wallet : wallets) {
+        outFile << wallet.getWalletId() << ";"
+                << wallet.getUsername() << ";"
+                << wallet.getPoint() << "\n";
+    }
+    outFile.close();
+
+    logTransaction(fromWallet.getWalletId(), toWallet.getWalletId(), fromWallet.getUsername(), toWallet.getUsername(), amount, "Thanh cong");
+    std::cout << "Giao dich thanh cong: " << amount << " diem tu " << fromUsername << " den nguoi dung " << toUsername << "\n";
     return true;
 }
 

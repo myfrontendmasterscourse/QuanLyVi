@@ -31,6 +31,8 @@ public:
     // Chuyển điểm từ username đến ví nhận theo username (atomic)
     bool transferPointsFromUserToUser(const std::string& fromUsername, const std::string& toUsername, int amount);
 
+    bool transferPointsFromUserToUser(const std::string& fromUsername);
+
     // Ghi lịch sử giao dịch (thêm trạng thái)
     void logTransaction(const std::string& fromId, const std::string& toId, const std::string& fromUsername, const std::string& toUsername, int amount, const std::string& status);
 
