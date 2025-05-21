@@ -69,13 +69,13 @@ void registerNewAccount(AccountManager& manager, WalletManager& walletManager) {
         std::cout << "Mat khau: ";
         std::getline(std::cin, password);
         
-        std::cout << "Loai tai khoan (A - Admin, U - User thuong): ";
-        std::cin >> choice;
-        clearInputBuffer();
+        // std::cout << "Loai tai khoan (A - Admin, U - User thuong): ";
+        // std::cin >> choice;
+        // clearInputBuffer();
         
-        if (choice == 'A' || choice == 'a') {
-            type = AccountType::ADMIN;
-        }
+        // if (choice == 'A' || choice == 'a') {
+        //     type = AccountType::ADMIN;
+        // }
         
         // Đăng ký tài khoản
         manager.registerAccount(newUser, username, password, type, false);
@@ -602,7 +602,7 @@ int main() {
                         std::cout << "Lua chon khong hop le!" << std::endl;
                     }
                     break;
-                case 3: // Đăng xuất
+                case 3:
                     walletServices(manager, walletManager);
                     break;
                 case 4: {

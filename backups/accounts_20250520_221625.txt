@@ -1,0 +1,5 @@
+4
+admin||ce425d56544eb84b:ZD8qmM3cqhBU34mh||04/05/2025 16:30:00||1||ADMIN||0||System Administrator||01/01/2000||Ha Noi||0987654321||admin@system.com
+khoitq||e093a516160bc625:VHWhWsV9ZBwmbuhy||15/05/2025 09:51:32||1||REGULAR||0||khoitq||quer||quer||uqer||quer
+khoitq2||973d253e746d7ba4:fEam1g7V4NVrbbg3||20/05/2025 11:11:10||1||REGULAR||0||khoitq2||khfsdg||sdaf||sdf||sadf
+huudat||12b15781f5c2552d:ZqAtJ3zMqEO9kJPC||20/05/2025 20:49:10||1||REGULAR||0||nguyen huu dat||09/11/2000||ha noi||0965536727||huudat@gmail.com

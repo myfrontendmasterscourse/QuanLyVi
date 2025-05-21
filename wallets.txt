@@ -1,4 +1,5 @@
-1;admin;9720
+1;admin;9620
 2;khoitq;149
 3;khoitq2;31
 4;huudat;100
+5;vuyen;100
